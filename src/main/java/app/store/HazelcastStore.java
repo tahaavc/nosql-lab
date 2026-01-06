@@ -1,26 +1,33 @@
-
 package app.store;
 
+import app.model.Student;
 import com.hazelcast.client.HazelcastClient;
+import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
-import app.model.Student;
 
 public class HazelcastStore {
-    static HazelcastInstance hz;
-    static IMap<String, Student> map;
+    private static HazelcastInstance client;
+    private static IMap<String, Student> map;
 
     public static void init() {
-        hz = HazelcastClient.newHazelcastClient(); // config dosyasına bağlanır
-        map = hz.getMap("ogrenciler");
-        for (int i = 0; i < 10000; i++) {
-            String id = "2025" + String.format("%06d", i);
-            Student s = new Student(id, "Ad Soyad " + i, "Bilgisayar");
-            map.put(id, s);
+        ClientConfig config = new ClientConfig();
+        config.getGroupConfig().setName("dev");
+        config.getNetworkConfig().addAddress("127.0.0.1:5701");
+
+        client = HazelcastClient.newHazelcastClient(config);
+        map = client.getMap("students");
+        map.clear();
+
+        for (int i = 1; i <= 10000; i++) {
+            String id = String.format("2025%06d", i);
+            Student s = new Student(id, "Student " + i, "Computer Engineering");
+            map.put(s.getStudent_no(), s);
         }
+        System.out.println("Hazelcast: 10.000 kayıt hazır.");
     }
 
-    public static Student get(String id) {
-        return map.get(id);
+    public static Student get(String studentNo) {
+        return map.get(studentNo);
     }
 }

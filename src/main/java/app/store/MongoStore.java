@@ -1,29 +1,29 @@
-
 package app.store;
 
+import app.model.Student;
 import com.mongodb.client.*;
 import org.bson.Document;
-import app.model.Student;
-import com.google.gson.Gson;
 
 public class MongoStore {
-    static MongoClient client;
-    static MongoCollection<Document> collection;
-    static Gson gson = new Gson();
+    private static MongoCollection<Document> collection;
 
     public static void init() {
-        client = MongoClients.create("mongodb://localhost:27017"); // bağlantı adresi burada
-        collection = client.getDatabase("nosqllab").getCollection("ogrenciler");
-        collection.drop(); // eski kayıtları temizle
-        for (int i = 0; i < 10000; i++) {
-            String id = "2025" + String.format("%06d", i);
-            Student s = new Student(id, "Ad Soyad " + i, "Bilgisayar");
-            collection.insertOne(Document.parse(gson.toJson(s)));
+        MongoClient client = MongoClients.create("mongodb://localhost:27017");
+        MongoDatabase database = client.getDatabase("nosql_lab");
+        collection = database.getCollection("students");
+        collection.drop();
+
+        for (int i = 1; i <= 10000; i++) {
+            String id = String.format("2025%06d", i);
+            Document doc = new Document("student_no", id)
+                    .append("name", "Student " + i)
+                    .append("department", "Computer Engineering");
+            collection.insertOne(doc);
         }
+        System.out.println("MongoDB: 10.000 kayıt hazır.");
     }
 
-    public static Student get(String id) {
-        Document doc = collection.find(new Document("ogrenciNo", id)).first();
-        return doc != null ? gson.fromJson(doc.toJson(), Student.class) : null;
+    public static Document get(String studentNo) {
+        return collection.find(new Document("student_no", studentNo)).first();
     }
 }
